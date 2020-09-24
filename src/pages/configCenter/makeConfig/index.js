@@ -1,118 +1,68 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card, Tree, Space, List, Button } from 'antd'
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import MonacoEditor, { MonacoDiffEditor } from 'react-monaco-editor';
 import styles from './style.less'
-
-const treeData = [
-  {
-    title: '0-0',
-    key: '0-0',
-    children: [
-      {
-        title: '0-0-0',
-        key: '0-0-0',
-        children: [
-          {
-            title: '0-0-0-0',
-            key: '0-0-0-0',
-          },
-          {
-            title: '0-0-0-1',
-            key: '0-0-0-1',
-          },
-          {
-            title: '0-0-0-2',
-            key: '0-0-0-2',
-          },
-        ],
-      },
-      {
-        title: '0-0-1',
-        key: '0-0-1',
-        children: [
-          {
-            title: '0-0-1-0',
-            key: '0-0-1-0',
-          },
-          {
-            title: '0-0-1-1',
-            key: '0-0-1-1',
-          },
-          {
-            title: '0-0-1-2',
-            key: '0-0-1-2',
-          },
-        ],
-      },
-      {
-        title: '0-0-2',
-        key: '0-0-2',
-      },
-    ],
-  },
-  {
-    title: '0-1',
-    key: '0-1',
-    children: [
-      {
-        title: '0-1-0-0',
-        key: '0-1-0-0',
-      },
-      {
-        title: '0-1-0-1',
-        key: '0-1-0-1',
-      },
-      {
-        title: '0-1-0-2',
-        key: '0-1-0-2',
-      },
-    ],
-  },
-  {
-    title: '0-2',
-    key: '0-2',
-  },
-];
-
-const data = [
-    {
-      title: 'Ant Design Title 1',
-    },
-    {
-      title: 'Ant Design Title 2',
-    },
-    {
-      title: 'Ant Design Title 3',
-    },
-    {
-      title: 'Ant Design Title 4',
-    },
-];
+import httpUtil from '../../../utils/request'
 
 const MakeConfig = () => {
 
-    const [expandedKeys, setExpandedKeys] = useState(['0-0-0', '0-0-1']);
-    const [checkedKeys, setCheckedKeys] = useState(['0-0-0']);
-    const [selectedKeys, setSelectedKeys] = useState([]);
-    const [autoExpandParent, setAutoExpandParent] = useState(true);
-  
-    const onExpand = (expandedKeys) => {
-      console.log('onExpand', expandedKeys); 
-      setExpandedKeys(expandedKeys);
-      setAutoExpandParent(false);
-    };
-  
-    const onCheck = (checkedKeys) => {
-      console.log('onCheck', checkedKeys);
-      setCheckedKeys(checkedKeys);
-    };
-  
-    const onSelect = (selectedKeys, info) => {
-      console.log('onSelect', info);
-      setSelectedKeys(selectedKeys);
-    };
+    const [treeData, setTreeData] = useState([])
 
+    useEffect(() => {
+        getTreeData()
+    }, [])
+
+    const getTreeData = async () => {
+        let resp = await httpUtil.get('/groups/propKeys')
+        let dstData = wrapTree(resp)
+        setTreeData(dstData)
+    }
+
+    const wrapTree = sourceList => {
+        return sourceList.map(item => {
+            return {
+                key: `group-${item.group.id}`,
+                title: item.group.groupName,
+                children: item.keys.map(itm => {
+                    return {
+                        key: `key-${itm.id}`,
+                        keyId: itm.id,
+                        groupId: itm.groupId,
+                        title: itm.propKey,
+                    }
+                })
+            }
+        })
+    }
+
+    const [choosedPropKeys, setChoosedPropKeys] = useState([])
+    const [checkedKeys, setCheckedKeys] = useState([]);
+  
+    const onCheck = (checkedKeys, nodeInfo) => {
+
+        let propKeys = choosedPropKeys.slice()
+        if (nodeInfo.checked) {
+            nodeInfo.checkedNodes
+                            .filter(node => node.key.indexOf('group') == -1)
+                            .map(node => {
+                                let index = propKeys.findIndex(key => key.id == node.keyId)
+                                if (index == -1) {
+                                    propKeys.push({
+                                        id: node.keyId,
+                                        propKey: node.title,
+                                        propValue: {}
+                                    })
+                                }
+                            })
+        } else {
+            //checked == false
+            propKeys = propKeys.filter(key => nodeInfo.checkedNodes.findIndex(node => node.keyId == key.id) > -1)
+        }
+
+        setChoosedPropKeys(propKeys)
+        setCheckedKeys(checkedKeys);
+    };
 
     const [code, setCode] = useState('server:\n\tport: 8080')
 
@@ -137,13 +87,8 @@ const MakeConfig = () => {
             >
                 <Tree
                     checkable
-                    onExpand={onExpand}
-                    expandedKeys={expandedKeys}
-                    autoExpandParent={autoExpandParent}
                     onCheck={onCheck}
                     checkedKeys={checkedKeys}
-                    onSelect={onSelect}
-                    selectedKeys={selectedKeys}
                     treeData={treeData}
                 />
             </Card>
@@ -157,13 +102,13 @@ const MakeConfig = () => {
                 <List
                     size="small"
                     itemLayout="horizontal"
-                    dataSource={data}
+                    dataSource={choosedPropKeys}
                     footer={<div></div>}
                     renderItem={item => (
                         <List.Item
                             actions={[<EditOutlined className={styles.edit_icon} />, <DeleteOutlined className={styles.delete_icon} />]}
                         >
-                            {item.title}
+                            {item.propKey}
                         </List.Item>
                     )}
                 />
