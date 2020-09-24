@@ -73,7 +73,7 @@ const router = [
                         hidden: true,
                         component: lazy(() => import('../pages/exception/pageNotFound'))
                     },
-                    { path: '/', exact: true, redirect: '/home', hidden: true},
+                    { path: '/', exact: true, redirect: '/dataStatistics', hidden: true},
                     { path: '*', exact: true, redirect: '/404', hidden: true },
                 ]
             }
