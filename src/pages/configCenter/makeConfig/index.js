@@ -52,6 +52,7 @@ const MakeConfig = () => {
                                     propKeys.push({
                                         id: node.keyId,
                                         propKey: node.title,
+                                        groupId: node.groupId,
                                         propValue: {
                                             id: '',
                                             valueName: ''
@@ -178,6 +179,24 @@ const MakeConfig = () => {
         setShowConfigCode(showString)
     }
 
+    const removePropKey = index => {
+        let propKeys = choosedPropKeys.slice()
+        let checkedKeysCopy = checkedKeys.slice()
+
+        let needRemoveKey = propKeys[index]
+        safeSplice(propKeys, index)
+        safeSplice(checkedKeysCopy, checkedKeysCopy.findIndex(key => key == `key-${needRemoveKey.id}`))
+        safeSplice(checkedKeysCopy, checkedKeysCopy.findIndex(key => key == `group-${needRemoveKey.groupId}`))
+        
+        makeShowConfigCode(propKeys)
+        setChoosedPropKeys(propKeys)
+        setCheckedKeys(checkedKeysCopy);
+    }
+
+    const safeSplice = (arr, removeIndex, count = 1) => {
+        removeIndex > -1 && arr.splice(removeIndex, count)
+    }
+
     return (
         <div className={styles.main}>
             <Card 
@@ -216,7 +235,7 @@ const MakeConfig = () => {
                                         </Tooltip> 
                                         :
                                         <EditOutlined className={styles.edit_icon} onClick={() => handlePropValueTableModalOpen(item)} />, 
-                                    <DeleteOutlined className={styles.delete_icon} />
+                                    <DeleteOutlined className={styles.delete_icon} onClick={() => removePropKey(index)} />
                             ]}
                         >
                             {item.propKey}
