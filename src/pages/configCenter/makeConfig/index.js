@@ -242,7 +242,7 @@ const MakeConfig = () => {
             </Card>
             <Card 
                 title="已选配置"
-                style={{width: '600px', flexGrow: 1}}
+                style={{width: '500px', flexGrow: 1}}
                 extra={
                     <Button type="primary" size="small" onClick={createYAMLConfig}>生成yaml配置</Button>
                 }
@@ -274,7 +274,7 @@ const MakeConfig = () => {
                 />
             </Card>
             <MonacoEditor
-                width="600"
+                width="700"
                 height="820"
                 language="yaml"
                 theme="vs-dark"
