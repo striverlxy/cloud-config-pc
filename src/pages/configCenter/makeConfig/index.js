@@ -4,6 +4,7 @@ import { DeleteOutlined, EditOutlined, ArrowUpOutlined, ArrowDownOutlined } from
 import MonacoEditor, { MonacoDiffEditor } from 'react-monaco-editor';
 import styles from './style.less'
 import httpUtil from '../../../utils/request'
+import YAML from 'json2yaml'
 
 const MakeConfig = () => {
 
@@ -64,8 +65,6 @@ const MakeConfig = () => {
             //checked == false
             propKeys = propKeys.filter(key => nodeInfo.checkedNodes.findIndex(node => node.keyId == key.id) > -1)
         }
-
-
 
         //准备展示数据
         makeShowConfigCode(propKeys)
@@ -187,7 +186,7 @@ const MakeConfig = () => {
         safeSplice(propKeys, index)
         safeSplice(checkedKeysCopy, checkedKeysCopy.findIndex(key => key == `key-${needRemoveKey.id}`))
         safeSplice(checkedKeysCopy, checkedKeysCopy.findIndex(key => key == `group-${needRemoveKey.groupId}`))
-        
+
         makeShowConfigCode(propKeys)
         setChoosedPropKeys(propKeys)
         setCheckedKeys(checkedKeysCopy);
@@ -195,6 +194,37 @@ const MakeConfig = () => {
 
     const safeSplice = (arr, removeIndex, count = 1) => {
         removeIndex > -1 && arr.splice(removeIndex, count)
+    }
+
+    const createYAMLConfig = () => {
+        let propKeys = choosedPropKeys.slice()
+        let jsonConfig = {}
+        propKeys.map(item => {
+            let splitPropKeyArr = item.propKey.split('.')
+            jsonConfig = wrapJSON(splitPropKeyArr, jsonConfig, item.propValue.valueName)
+        })
+
+        let yamlStr = YAML.stringify(jsonConfig)
+        setShowConfigCode(yamlStr)
+    }
+    const wrapJSON = (arr, jsonData, valueName) => {
+        if (arr.length == 0) {
+            return {};
+        }
+
+        let objectKey = arr[0]
+        arr.splice(0, 1)
+
+        if (arr.length == 0) {
+            jsonData[objectKey] = valueName
+        } else {
+            if (!jsonData.hasOwnProperty(objectKey)) {
+                jsonData[objectKey] = {}
+            } 
+            jsonData[objectKey] = wrapJSON(arr, jsonData[objectKey], valueName)
+        }
+
+        return jsonData
     }
 
     return (
@@ -214,7 +244,7 @@ const MakeConfig = () => {
                 title="已选配置"
                 style={{width: '600px', flexGrow: 1}}
                 extra={
-                    <Button type="primary" size="small">生成yaml配置</Button>
+                    <Button type="primary" size="small" onClick={createYAMLConfig}>生成yaml配置</Button>
                 }
             >
                 <List
