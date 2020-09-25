@@ -136,15 +136,7 @@ const MakeConfig = () => {
 
     const propValueIsHasUsed = propValueInfo => {
         let keyObj = choosedPropKeys.find(key => key.id == propValueTableModalProps.propKeyId)
-        if (null == keyObj) {
-            return false
-        } else {
-            if (keyObj.propValue && keyObj.propValue.id == propValueInfo.id) {
-                return true
-            } else {
-                return false
-            }
-        }
+        return keyObj && keyObj.propValue && keyObj.propValue.id == propValueInfo.id
     }
 
     const getPropValueList = async id => {
@@ -214,10 +206,10 @@ const MakeConfig = () => {
                     renderItem={(item, index) => (
                         <List.Item
                             actions={[
-                                    <Space size={1}>
+                                    <div>
                                         {index == 0 ? null : <ArrowUpOutlined className={styles.edit_icon} onClick={() => movePosition(index, index - 1)} />}
                                         {index == (choosedPropKeys.length - 1) ? null : <ArrowDownOutlined className={styles.edit_icon} onClick={() => movePosition(index, index + 1)} />}
-                                    </Space>,
+                                    </div>,
                                     item.propValue.id ?
                                         <Tooltip placement="bottom" title={item.propValue.valueName}>
                                             <EditOutlined className={styles.done_icon} onClick={() => handlePropValueTableModalOpen(item)} />
