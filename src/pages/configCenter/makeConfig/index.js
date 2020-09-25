@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { Card, Tree, Space, List, Button } from 'antd'
-import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
+import { Card, Tree, Space, List, Button, Modal, Table, Tooltip } from 'antd'
+import { DeleteOutlined, EditOutlined, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
 import MonacoEditor, { MonacoDiffEditor } from 'react-monaco-editor';
 import styles from './style.less'
 import httpUtil from '../../../utils/request'
@@ -38,6 +38,7 @@ const MakeConfig = () => {
 
     const [choosedPropKeys, setChoosedPropKeys] = useState([])
     const [checkedKeys, setCheckedKeys] = useState([]);
+    const [showConfigCode, setShowConfigCode] = useState('')
   
     const onCheck = (checkedKeys, nodeInfo) => {
 
@@ -51,7 +52,10 @@ const MakeConfig = () => {
                                     propKeys.push({
                                         id: node.keyId,
                                         propKey: node.title,
-                                        propValue: {}
+                                        propValue: {
+                                            id: '',
+                                            valueName: ''
+                                        }
                                     })
                                 }
                             })
@@ -60,11 +64,13 @@ const MakeConfig = () => {
             propKeys = propKeys.filter(key => nodeInfo.checkedNodes.findIndex(node => node.keyId == key.id) > -1)
         }
 
+
+
+        //准备展示数据
+        makeShowConfigCode(propKeys)
         setChoosedPropKeys(propKeys)
         setCheckedKeys(checkedKeys);
     };
-
-    const [code, setCode] = useState('server:\n\tport: 8080')
 
     const onChange = (newValue, e) => {
         console.log(newValue)
@@ -79,11 +85,112 @@ const MakeConfig = () => {
         selectOnLineNumbers: true
     };
 
+    const [propValueTableModalProps, setPropValueTableModalProps] = useState({
+        visible: false,
+        title: '',
+        propKeyId: ''
+    })
+    const [propValueTableModalData, setPropValueTableModalData] = useState({})
+    const handlePropValueTableModalOpen = async key => {
+        await getPropValueList(key.id)
+        setPropValueTableModalProps({
+            visible: true,
+            title: key.propKey,
+            propKeyId: key.id
+        })
+        
+    }
+
+    const handlePropValueTableModalClose = () => {
+        setPropValueTableModalProps({
+            visible: false,
+            title: '',
+            propKeyId: ''
+        })
+        setPropValueTableModalData({})
+    }
+
+    const propValueColumns = [
+        {
+            title: '属性值',
+            dataIndex: 'propValue',
+            align: 'center'
+        },
+        {
+            title: '属性描述',
+            dataIndex: 'intro',
+            align: 'center',
+        },
+        {
+            title: '操作',
+            align: 'center',
+            key: 'action',
+            width: '100px',
+            render: (text, record) => (
+                <Space>
+                    <Button style={{borderRadius: '4px'}} type="primary" disabled={propValueIsHasUsed(record)} size="middle" onClick={() => choosePropValue(record)}>{propValueIsHasUsed(record) ? '已选择' : '选择'}</Button>
+                </Space>
+            )
+        }
+    ]
+
+    const propValueIsHasUsed = propValueInfo => {
+        let keyObj = choosedPropKeys.find(key => key.id == propValueTableModalProps.propKeyId)
+        if (null == keyObj) {
+            return false
+        } else {
+            if (keyObj.propValue && keyObj.propValue.id == propValueInfo.id) {
+                return true
+            } else {
+                return false
+            }
+        }
+    }
+
+    const getPropValueList = async id => {
+        let resp = await httpUtil.get(`/propValue/list/${id}`)
+        setPropValueTableModalData(resp)
+    }
+
+    const choosePropValue = propValueInfo => {
+        let propKeys = choosedPropKeys.slice()
+        let index = propKeys.findIndex(key => key.id == propValueTableModalProps.propKeyId)
+        if (index == -1) {
+            return ;
+        }
+        propKeys[index].propValue = {
+            id: propValueInfo.id,
+            valueName: propValueInfo.propValue
+        }
+
+        makeShowConfigCode(propKeys)
+        setChoosedPropKeys(propKeys)
+        handlePropValueTableModalClose()
+    }
+
+    const movePosition = (srcIndex, dstIndex) => {
+        let propKeys = choosedPropKeys.slice()
+        let tmp = propKeys[srcIndex]
+        propKeys[srcIndex] = propKeys[dstIndex]
+        propKeys[dstIndex] = tmp
+
+        makeShowConfigCode(propKeys)
+        setChoosedPropKeys(propKeys)
+    }
+
+    const makeShowConfigCode = propKeys => {
+        let showString = ''
+        propKeys.map(item => {
+            showString += `${item.propKey}=${item.propValue.valueName}\n`
+        })
+        setShowConfigCode(showString)
+    }
+
     return (
         <div className={styles.main}>
             <Card 
                 title="属性配置"
-                style={{width: '500px', flexGrow: 1}}
+                style={{width: '300px', flexGrow: 1}}
             >
                 <Tree
                     checkable
@@ -94,7 +201,7 @@ const MakeConfig = () => {
             </Card>
             <Card 
                 title="已选配置"
-                style={{width: '500px', flexGrow: 1}}
+                style={{width: '600px', flexGrow: 1}}
                 extra={
                     <Button type="primary" size="small">生成yaml配置</Button>
                 }
@@ -104,9 +211,21 @@ const MakeConfig = () => {
                     itemLayout="horizontal"
                     dataSource={choosedPropKeys}
                     footer={<div></div>}
-                    renderItem={item => (
+                    renderItem={(item, index) => (
                         <List.Item
-                            actions={[<EditOutlined className={styles.edit_icon} />, <DeleteOutlined className={styles.delete_icon} />]}
+                            actions={[
+                                    <Space size={1}>
+                                        {index == 0 ? null : <ArrowUpOutlined className={styles.edit_icon} onClick={() => movePosition(index, index - 1)} />}
+                                        {index == (choosedPropKeys.length - 1) ? null : <ArrowDownOutlined className={styles.edit_icon} onClick={() => movePosition(index, index + 1)} />}
+                                    </Space>,
+                                    item.propValue.id ?
+                                        <Tooltip placement="bottom" title={item.propValue.valueName}>
+                                            <EditOutlined className={styles.done_icon} onClick={() => handlePropValueTableModalOpen(item)} />
+                                        </Tooltip> 
+                                        :
+                                        <EditOutlined className={styles.edit_icon} onClick={() => handlePropValueTableModalOpen(item)} />, 
+                                    <DeleteOutlined className={styles.delete_icon} />
+                            ]}
                         >
                             {item.propKey}
                         </List.Item>
@@ -114,15 +233,32 @@ const MakeConfig = () => {
                 />
             </Card>
             <MonacoEditor
-                width="500"
+                width="600"
                 height="820"
                 language="yaml"
                 theme="vs-dark"
-                value={code}
+                value={showConfigCode}
                 options={options}
                 onChange={onChange}
                 editorDidMount={editorDidMount}
             />
+            <Modal
+                width={1000}
+                destroyOnClose
+                title={`选择【 ${propValueTableModalProps.title} 】的属性值`}
+                visible={propValueTableModalProps.visible}
+                onCancel={handlePropValueTableModalClose}
+                footer={null}
+            >
+                <Table
+                    bordered
+                    style={{marginTop: 12}}
+                    columns={propValueColumns}
+                    rowKey={record => record.id}
+                    dataSource={propValueTableModalData}
+                    pagination={false}
+                />
+            </Modal>
         </div>
     )
 }

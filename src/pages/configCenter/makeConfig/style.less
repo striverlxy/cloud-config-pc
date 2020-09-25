@@ -6,13 +6,16 @@
     background-color: @menu-bg;
     display: flex;
     flex: 1;
+    .done_icon {
+        color: @success-color;
+    }
     .edit_icon {
         color: @primary-color
     }
     .delete_icon {
         color: @error-color
     }
-    .edit_icon:hover, .delete_icon:hover {
+    .done_icon:hover, .edit_icon:hover, .delete_icon:hover {
         cursor: pointer;
     }
 }
