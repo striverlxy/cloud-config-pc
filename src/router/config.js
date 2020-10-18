@@ -36,6 +36,12 @@ const router = [
                         component: lazy(() => import('../pages/dataStatistics'))
                     },
                     {
+                        path: '/demo',
+                        name: 'demo',
+                        icon: <LineChartOutlined />,
+                        component: lazy(() => import('../pages/demo'))
+                    },
+                    {
                         path: '/configCenter',
                         name: '配置中心',
                         children: [
@@ -53,6 +59,12 @@ const router = [
                                 path: '/configCenter/propKeyList',
                                 name: '属性列表',
                                 component: lazy(() => import('../pages/configCenter/propGroup/propKeyList')),
+                                hidden: true
+                            },
+                            {
+                                path: '/configCenter/propTemplate',
+                                name: '属性模版',
+                                component: lazy(() => import('../pages/configCenter/propGroup/propTemplate')),
                                 hidden: true
                             },
                             {

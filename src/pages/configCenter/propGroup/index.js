@@ -17,6 +17,12 @@ const PropGroup = () => {
         })
     }
 
+    const gotoPropTemplate = groupId => {
+        history.push('/configCenter/propTemplate', {
+            groupId: groupId
+        })
+    }
+
     const [propGroupList, setPropGroupList] = useState([])
     useEffect(() => {
         getPropGroupList()
@@ -103,7 +109,7 @@ const PropGroup = () => {
                                     </Space>
                                     <Space size={50}>
                                         <Button type="link" size="middle" onClick={() => gotoPropList(item.id)}>属性管理</Button>
-                                        <Button type="link" size="middle">模版管理</Button>
+                                        <Button type="link" size="middle" onClick={() => gotoPropTemplate(item.id)}>模版管理</Button>
                                     </Space>
                                 </Space>
                             </Card.Grid> 

@@ -227,11 +227,30 @@ const MakeConfig = () => {
         return jsonData
     }
 
+
+    const cardTabList = [
+        {
+            key: 'simple',
+            tab: '单一属性'
+        },
+        {
+            key: 'templete',
+            tab: '模版'
+        }
+    ]
+    const [activeCardTab, setActiveCardTab] = useState('simple')
+    const handleChangeCardTab = e => {
+        setActiveCardTab(e)
+    }
+
     return (
         <div className={styles.main}>
             <Card 
                 title="属性配置"
                 style={{width: '300px', flexGrow: 1}}
+                tabList={cardTabList}
+                activeTabKey={activeCardTab}
+                onTabChange={handleChangeCardTab}
             >
                 <Tree
                     checkable

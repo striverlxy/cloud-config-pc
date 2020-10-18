@@ -1,0 +1,21 @@
+@import '~antd/es/style/themes/default.less';
+
+.modal_main {
+    width: 100%;
+    height: 100%;
+    background-color: @menu-bg;
+    display: flex;
+    flex: 1;
+    .done_icon {
+        color: @success-color;
+    }
+    .edit_icon {
+        color: @primary-color
+    }
+    .delete_icon {
+        color: @error-color
+    }
+    .done_icon:hover, .edit_icon:hover, .delete_icon:hover {
+        cursor: pointer;
+    }
+}

@@ -11,7 +11,7 @@ export default class request {
 		}
     }
     
-    static API_HOST = 'http://localhost:8080'
+    static API_HOST = 'http://localhost:9999'
 
     static SUCCESS_CODE = '000000'
 
